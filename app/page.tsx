@@ -1,50 +1,63 @@
+// /app/page.tsx
 interface SearchParams {
-  title?: string;
   search?: string;
 }
 
 interface User {
   id: number;
-  firstName: string;
-  lastName: string;
+  name: string;
+  major: string;
+  year: number;
+  gpa: number;
 }
 
-export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const search = searchParams?.search || "";
-  const title = searchParams?.title || "";
 
-  // Add revalidate option so fetch works on build
-  const res = await fetch(`https://dummyjson.com/users/search?q=${search}`, {
-    next: { revalidate: 0 },
-  });
+  const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+  const url = `${baseUrl}/api/profiles${search ? `?name=${search}` : ""}`;
 
-  const data: { users: User[] } = await res.json();
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) return <p>Failed to load profiles.</p>;
+
+  const data: User[] = await res.json();
 
   return (
-    <main>
+    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
       <h1>Developer Profiles</h1>
 
-      <form>
-        <input name="search" placeholder="Search name" defaultValue={search} />
-
-        <select name="title" defaultValue={title}>
-          <option value="">All Titles</option>
-          <option value="developer">Developer</option>
-          <option value="designer">Designer</option>
-        </select>
-
-        <button type="submit">Filter</button>
+      <form method="get" style={{ marginBottom: "1rem" }}>
+        <input
+          name="search"
+          placeholder="Search name"
+          defaultValue={search}
+          style={{ padding: "0.5rem", marginRight: "0.5rem" }}
+        />
+        <button type="submit" style={{ padding: "0.5rem 1rem" }}>
+          Filter
+        </button>
       </form>
 
-      <ul>
-        {data.users.map((user) => (
-          <li key={user.id}>
-            <a href={`/profiles/${user.id}`}>
-              {user.firstName} {user.lastName}
-            </a>
-          </li>
-        ))}
-      </ul>
+      {data.length === 0 ? (
+        <p>No profiles found.</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {data.map((user) => (
+            <li key={user.id} style={{ marginBottom: "0.5rem" }}>
+              <a
+                href={`/profiles/${user.id}`}
+                style={{ color: "blue", textDecoration: "none" }}
+              >
+                {user.name} — {user.major}, Year {user.year}, GPA: {user.gpa}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

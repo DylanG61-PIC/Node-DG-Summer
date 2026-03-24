@@ -1,36 +1,30 @@
+// /app/profiles/[id]/page.tsx
 interface ProfileParams {
-  params: {
-    id: string; // always string from URL
-  };
+  params: { id: string };
 }
 
 interface User {
   id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  company: {
-    name: string;
-  };
+  name: string;
+  major: string;
+  year: number;
+  gpa: number;
 }
 
 export default async function ProfilePage({ params }: ProfileParams) {
-  const res = await fetch(`https://dummyjson.com/users/${params.id}`, {
-    next: { revalidate: 0 }, // ensures server-side fetch
-  });
+  const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+  const res = await fetch(`${baseUrl}/api/profiles/${params.id}`, { next: { revalidate: 0 } });
+
+  if (!res.ok) return <p>Profile not found</p>;
 
   const user: User = await res.json();
 
   return (
-    <main>
-      <h1>
-        {user.firstName} {user.lastName}
-      </h1>
-
-      <p>Email: {user.email}</p>
-      <p>Phone: {user.phone}</p>
-      <p>Company: {user.company.name}</p>
+    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1>{user.name}</h1>
+      <p>Major: {user.major}</p>
+      <p>Year: {user.year}</p>
+      <p>GPA: {user.gpa}</p>
     </main>
   );
 }
